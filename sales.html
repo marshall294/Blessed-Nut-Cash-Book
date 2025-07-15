@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blessed Nut - Weekly Sales</title>
+  <style>
+    :root {
+      --primary: #228B22;
+      --accent: #0f5132;
+      --gray: #ccc;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f0f2f5;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary);
+    }
+    .card {
+      background: white;
+      padding: 1.5rem;
+      margin: 1rem auto;
+      max-width: 750px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: 1px solid var(--gray);
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: var(--primary);
+      color: white;
+    }
+    td input {
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--gray);
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      padding: 10px;
+      margin-top: 1rem;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--accent);
+    }
+    .add-row-btn {
+      margin-top: 0.5rem;
+      background: #ccc;
+      color: black;
+    }
+    #successMsg {
+      text-align: center;
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none;
+      }
+      tr {
+        margin-bottom: 1rem;
+        background: #f9f9f9;
+        padding: 0.5rem;
+        border-radius: 8px;
+      }
+      td {
+        text-align: left;
+        padding: 0.5rem 0;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 Weekly Sales Entry</h1>
+
+  <div class="card">
+    <label for="year">Year</label>
+    <select id="year"></select>
+
+    <label for="month">Month</label>
+    <select id="month"></select>
+
+    <label for="week">Week</label>
+    <select id="week"></select>
+
+    <h3>Sales Entry Table</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Unit Price (₦)</th>
+          <th>Total (₦)</th>
+          <th>Sales (₦)</th>
+        </tr>
+      </thead>
+      <tbody id="salesBody">
+        <tr>
+          <td><input type="date" /></td>
+          <td><input type="text" /></td>
+          <td><input type="number" class="qty" /></td>
+          <td><input type="number" class="unit" /></td>
+          <td><input type="number" class="total" readonly /></td>
+          <td><input type="number" class="sales" /></td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="add-row-btn" onclick="addSaleRow()">➕ Add Row</button>
+    <button onclick="saveSales()">💾 Save Sales</button>
+    <div id="successMsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Sales for Selected Week</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Total</th>
+          <th>Sales</th>
+        </tr>
+      </thead>
+      <tbody id="weeklySalesTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, setDoc, doc, addDoc, query, where
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFsHg9fK6IDnHbuxmBleEfIIfVGsuLDik",
+      authDomain: "profile-b825d.firebaseapp.com",
+      projectId: "profile-b825d",
+      storageBucket: "profile-b825d.appspot.com",
+      messagingSenderId: "925276859161",
+      appId: "1:925276859161:web:194c60f6dbd9f1ef8bf388"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const yearSel = document.getElementById("year");
+    const monthSel = document.getElementById("month");
+    const weekSel = document.getElementById("week");
+    const salesBody = document.getElementById("salesBody");
+    const tableDisplay = document.getElementById("weeklySalesTable");
+
+    const monthNames = {
+      "01": "January", "02": "February", "03": "March",
+      "04": "April", "05": "May", "06": "June",
+      "07": "July", "08": "August", "09": "September",
+      "10": "October", "11": "November", "12": "December"
+    };
+
+    function populateYears() {
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 1; y <= currentYear + 3; y++) {
+        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+      }
+      yearSel.value = currentYear;
+    }
+
+    function populateMonths() {
+      for (const m in monthNames) {
+        monthSel.innerHTML += `<option value="${m}">${monthNames[m]}</option>`;
+      }
+    }
+
+    async function populateWeeks() {
+      weekSel.innerHTML = "";
+      const y = yearSel.value, m = monthSel.value;
+      const snaps = await getDocs(collection(db, "investments"));
+      const weeks = [];
+      snaps.forEach(doc => {
+        const d = doc.data();
+        if (d.year === y && d.month === m) {
+          weeks.push(d.week);
+        }
+      });
+      weeks.sort((a, b) => a - b).forEach(w => {
+        weekSel.innerHTML += `<option value="${w}">${monthNames[m]} - Week ${w}</option>`;
+      });
+      if (weeks.length > 0) loadWeeklySales();
+    }
+
+    window.addSaleRow = function () {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="date" /></td>
+        <td><input type="text" /></td>
+        <td><input type="number" class="qty" /></td>
+        <td><input type="number" class="unit" /></td>
+        <td><input type="number" class="total" readonly /></td>
+        <td><input type="number" class="sales" /></td>
+      `;
+      salesBody.appendChild(row);
+    }
+
+    function calculateTotals() {
+      const rows = salesBody.querySelectorAll("tr");
+      rows.forEach(row => {
+        const qty = row.querySelector(".qty");
+        const unit = row.querySelector(".unit");
+        const total = row.querySelector(".total");
+        if (qty && unit && total) {
+          qty.addEventListener("input", () => {
+            total.value = (qty.value * unit.value).toFixed(2);
+          });
+          unit.addEventListener("input", () => {
+            total.value = (qty.value * unit.value).toFixed(2);
+          });
+        }
+      });
+    }
+
+    window.saveSales = async function () {
+      const year = yearSel.value;
+      const month = monthSel.value;
+      const week = weekSel.value;
+      if (!year || !month || !week) return alert("Select Year, Month, and Week");
+
+      const rows = salesBody.querySelectorAll("tr");
+      for (let row of rows) {
+        const inputs = row.querySelectorAll("input");
+        const [date, item, qty, unitPrice, total, sales] = [...inputs].map(i => i.value);
+        if (!date || !item || !qty || !unitPrice || !sales) continue;
+
+        await addDoc(collection(db, `sales/${year}_${month}_${week}/entries`), {
+          date, item,
+          quantity: parseFloat(qty),
+          unitPrice: parseFloat(unitPrice),
+          total: parseFloat(total),
+          sales: parseFloat(sales),
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      document.getElementById("successMsg").innerText = "✅ Sales saved successfully!";
+      loadWeeklySales();
+    }
+
+    async function loadWeeklySales() {
+      const year = yearSel.value;
+      const month = monthSel.value;
+      const week = weekSel.value;
+      if (!year || !month || !week) return;
+
+      tableDisplay.innerHTML = "";
+      const snap = await getDocs(collection(db, `sales/${year}_${month}_${week}/entries`));
+      snap.forEach(doc => {
+        const d = doc.data();
+        tableDisplay.innerHTML += `
+          <tr>
+            <td>${d.date}</td>
+            <td>${d.item}</td>
+            <td>${d.quantity}</td>
+            <td>₦${d.unitPrice}</td>
+            <td>₦${d.total}</td>
+            <td>₦${d.sales}</td>
+          </tr>
+        `;
+      });
+    }
+
+    yearSel.addEventListener("change", populateWeeks);
+    monthSel.addEventListener("change", populateWeeks);
+    populateYears();
+    populateMonths();
+    populateWeeks();
+    calculateTotals();
+  </script>
+</body>
+</html>

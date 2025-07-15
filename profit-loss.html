@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blessed Nut - Profit & Loss</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f0f2f5;
+    }
+    h1 {
+      text-align: center;
+      color: #228B22;
+    }
+    .card {
+      background: white;
+      padding: 1rem;
+      margin: 1rem auto;
+      max-width: 700px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .summary {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #e8f5e9;
+      border-left: 5px solid #228B22;
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+    .summary span {
+      font-weight: bold;
+    }
+    .profit {
+      color: green;
+    }
+    .loss {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>💰 Profit & Loss Summary</h1>
+
+  <div class="card">
+    <label for="year">Year</label>
+    <select id="year"></select>
+
+    <label for="month">Month</label>
+    <select id="month"></select>
+
+    <label for="week">Week</label>
+    <select id="week"></select>
+
+    <div class="summary" id="weeklyResult">
+      Select a week to view summary...
+    </div>
+
+    <div class="summary" id="monthlyResult">
+      Select a month to view monthly summary...
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, getDocs, collection
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFsHg9fK6IDnHbuxmBleEfIIfVGsuLDik",
+      authDomain: "profile-b825d.firebaseapp.com",
+      projectId: "profile-b825d",
+      storageBucket: "profile-b825d.appspot.com",
+      messagingSenderId: "925276859161",
+      appId: "1:925276859161:web:194c60f6dbd9f1ef8bf388"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const yearSel = document.getElementById("year");
+    const monthSel = document.getElementById("month");
+    const weekSel = document.getElementById("week");
+    const weeklyResult = document.getElementById("weeklyResult");
+    const monthlyResult = document.getElementById("monthlyResult");
+
+    const monthNames = {
+      "01": "January", "02": "February", "03": "March",
+      "04": "April", "05": "May", "06": "June",
+      "07": "July", "08": "August", "09": "September",
+      "10": "October", "11": "November", "12": "December"
+    };
+
+    function populateYears() {
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 1; y <= currentYear + 3; y++) {
+        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+      }
+      yearSel.value = currentYear;
+    }
+
+    function populateMonths() {
+      for (const m in monthNames) {
+        monthSel.innerHTML += `<option value="${m}">${monthNames[m]}</option>`;
+      }
+    }
+
+    async function populateWeeks() {
+      weekSel.innerHTML = "";
+      const y = yearSel.value, m = monthSel.value;
+      const snaps = await getDocs(collection(db, "investments"));
+      const weeks = [];
+      snaps.forEach(doc => {
+        const d = doc.data();
+        if (d.year === y && d.month === m) {
+          weeks.push(d.week);
+        }
+      });
+      weeks.sort((a, b) => a - b).forEach(w => {
+        weekSel.innerHTML += `<option value="${w}">${monthNames[m]} - Week ${w}</option>`;
+      });
+
+      if (weeks.length > 0) {
+        loadProfitLoss();      // Load week
+        loadMonthlySummary(); // Load month
+      } else {
+        weeklyResult.innerHTML = "No investment found for this month.";
+        monthlyResult.innerHTML = "";
+      }
+    }
+
+    async function loadProfitLoss() {
+      const y = yearSel.value, m = monthSel.value, w = weekSel.value;
+      if (!y || !m || !w) return;
+
+      const investSnap = await getDoc(doc(db, `investments/${y}_${m}_${w}`));
+      const invest = investSnap.exists() ? investSnap.data().totalAmount : 0;
+
+      const salesSnap = await getDocs(collection(db, `sales/${y}_${m}_${w}/entries`));
+      let salesTotal = 0;
+      salesSnap.forEach(doc => {
+        const d = doc.data();
+        salesTotal += parseFloat(d.sales || 0);
+      });
+
+      const profit = salesTotal - invest;
+      weeklyResult.innerHTML = `
+        <span>📅 Week:</span> ${monthNames[m]} Week ${w}, ${y}<br/>
+        <span>💼 Investment:</span> ₦${invest.toLocaleString()}<br/>
+        <span>🛒 Sales:</span> ₦${salesTotal.toLocaleString()}<br/>
+        <span>💰 ${profit >= 0 ? "Profit" : "Loss"}:</span>
+        <span class="${profit >= 0 ? "profit" : "loss"}">₦${Math.abs(profit).toLocaleString()}</span>
+      `;
+    }
+
+    async function loadMonthlySummary() {
+      const y = yearSel.value, m = monthSel.value;
+      if (!y || !m) return;
+
+      let totalInvestment = 0;
+      let totalSales = 0;
+
+      // Fetch all investments for the month
+      const investSnap = await getDocs(collection(db, "investments"));
+      const validWeeks = [];
+
+      investSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.year === y && d.month === m) {
+          totalInvestment += parseFloat(d.totalAmount || 0);
+          validWeeks.push(d.week);
+        }
+      });
+
+      // Fetch all sales for the valid weeks in that month
+      for (let wk of validWeeks) {
+        const salesSnap = await getDocs(collection(db, `sales/${y}_${m}_${wk}/entries`));
+        salesSnap.forEach(doc => {
+          totalSales += parseFloat(doc.data().sales || 0);
+        });
+      }
+
+      const profit = totalSales - totalInvestment;
+      monthlyResult.innerHTML = `
+        <span>📅 Month:</span> ${monthNames[m]}, ${y}<br/>
+        <span>💼 Total Investment:</span> ₦${totalInvestment.toLocaleString()}<br/>
+        <span>🛒 Total Sales:</span> ₦${totalSales.toLocaleString()}<br/>
+        <span>💰 Monthly ${profit >= 0 ? "Profit" : "Loss"}:</span>
+        <span class="${profit >= 0 ? "profit" : "loss"}">₦${Math.abs(profit).toLocaleString()}</span>
+      `;
+    }
+
+    yearSel.addEventListener("change", populateWeeks);
+    monthSel.addEventListener("change", populateWeeks);
+    weekSel.addEventListener("change", () => {
+      loadProfitLoss();
+      loadMonthlySummary();
+    });
+
+    populateYears();
+    populateMonths();
+    populateWeeks();
+  </script>
+</body>
+</html>

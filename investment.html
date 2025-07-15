@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blessed Nut - Weekly Investment</title>
+  <style>
+    :root {
+      --primary: #228B22;
+      --accent: #0f5132;
+      --gray: #ccc;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary);
+    }
+    .card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      max-width: 750px;
+      margin: 1rem auto;
+      box-shadow: 0 0 12px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid var(--gray);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      padding: 10px;
+      border: none;
+      margin-top: 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--accent);
+    }
+    table {
+      width: 100%;
+      margin-top: 1rem;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: var(--primary);
+      color: white;
+    }
+    td input {
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--gray);
+    }
+    .add-row {
+      margin-top: 0.5rem;
+      background: #ccc;
+      color: #000;
+    }
+    .success {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+      text-align: center;
+    }
+    .edit-btn {
+      background: #ffc107;
+      color: black;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .edit-btn:hover {
+      background: #e0a800;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none;
+      }
+      tr {
+        margin-bottom: 1rem;
+        background: #f9f9f9;
+        padding: 0.5rem;
+        border-radius: 8px;
+      }
+      td {
+        text-align: left;
+        padding: 0.5rem 0;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🧾 Weekly Investment</h1>
+
+  <div class="card">
+    <label for="year">Year</label>
+    <select id="year"></select>
+
+    <label for="month">Month</label>
+    <select id="month">
+      <option value="01">January</option>
+      <option value="02">February</option>
+      <option value="03">March</option>
+      <option value="04">April</option>
+      <option value="05">May</option>
+      <option value="06">June</option>
+      <option value="07">July</option>
+      <option value="08">August</option>
+      <option value="09">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+
+    <label for="week">Week</label>
+    <select id="week"></select>
+
+    <h3>Expenses Table</h3>
+    <table id="expenseTable">
+      <thead>
+        <tr>
+          <th>S/N</th>
+          <th>Description</th>
+          <th>Quantity</th>
+          <th>Amount (₦)</th>
+        </tr>
+      </thead>
+      <tbody id="expenseBody">
+        <tr>
+          <td>1</td>
+          <td><input type="text" placeholder="e.g. Fuel" /></td>
+          <td><input type="text" placeholder="e.g. 10 Litres" /></td>
+          <td><input type="number" /></td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="add-row" onclick="addExpenseRow()">➕ Add Row</button>
+    <button onclick="saveInvestment()">💾 Save / Update Investment</button>
+    <div class="success" id="successMsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>📋 Saved Investments</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Month</th>
+          <th>Week</th>
+          <th>Total (₦)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="savedTable"></tbody>
+    </table>
+  </div>
+
+
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, getDocs, collection
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFsHg9fK6IDnHbuxmBleEfIIfVGsuLDik",
+      authDomain: "profile-b825d.firebaseapp.com",
+      projectId: "profile-b825d",
+      storageBucket: "profile-b825d.appspot.com",
+      messagingSenderId: "925276859161",
+      appId: "1:925276859161:web:194c60f6dbd9f1ef8bf388"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const monthNames = {
+      "01": "January", "02": "February", "03": "March",
+      "04": "April", "05": "May", "06": "June",
+      "07": "July", "08": "August", "09": "September",
+      "10": "October", "11": "November", "12": "December"
+    };
+
+    function populateYears() {
+      const yearSel = document.getElementById("year");
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 1; y <= currentYear + 5; y++) {
+        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+      }
+      yearSel.value = currentYear;
+    }
+
+    function updateWeekDropdown() {
+      const month = document.getElementById("month").value;
+      const weekSelect = document.getElementById("week");
+      weekSelect.innerHTML = "";
+      const name = monthNames[month];
+      for (let i = 1; i <= 5; i++) {
+        let suffix = ["First", "Second", "Third", "Fourth", "Fifth"][i - 1];
+        weekSelect.innerHTML += `<option value="${i}">${name} - ${suffix} Week</option>`;
+      }
+    }
+
+    window.addExpenseRow = function () {
+      const table = document.getElementById("expenseBody");
+      const rowCount = table.rows.length + 1;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" /></td>
+        <td><input type="text" /></td>
+        <td><input type="number" /></td>
+      `;
+      table.appendChild(row);
+    }
+
+    window.saveInvestment = async function () {
+      const year = document.getElementById("year").value;
+      const month = document.getElementById("month").value;
+      const week = document.getElementById("week").value;
+      if (!year || !month || !week) return alert("Please select all fields.");
+
+      const rows = document.querySelectorAll("#expenseBody tr");
+      const expenses = [];
+      let total = 0;
+      rows.forEach(row => {
+        const cells = row.querySelectorAll("td input");
+        const desc = cells[0].value.trim();
+        const qty = cells[1].value.trim();
+        const amt = parseFloat(cells[2].value) || 0;
+        if (desc && qty && amt > 0) {
+          expenses.push({ description: desc, quantity: qty, amount: amt });
+          total += amt;
+        }
+      });
+      if (expenses.length === 0) return alert("Enter at least one expense.");
+
+      const data = { year, month, week, totalAmount: total, expenses, timestamp: new Date().toISOString() };
+      await setDoc(doc(db, `investments/${year}_${month}_${week}`), data);
+      document.getElementById("successMsg").innerText = "✅ Investment saved successfully!";
+      loadSavedInvestments();
+    }
+
+    async function loadSavedInvestments() {
+      const savedTable = document.getElementById("savedTable");
+      savedTable.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "investments"));
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        savedTable.innerHTML += `
+          <tr>
+            <td>${d.year}</td>
+            <td>${monthNames[d.month]}</td>
+            <td>${d.week}</td>
+            <td>₦${d.totalAmount.toLocaleString()}</td>
+            <td><button class="edit-btn" onclick="editInvestment('${docSnap.id}')">Edit</button></td>
+          </tr>`;
+      });
+    }
+
+    window.editInvestment = async function (docId) {
+      const ref = doc(db, `investments/${docId}`);
+      const snap = await ref.get();
+      const data = (await getDocs(collection(db, "investments"))).docs.find(doc => doc.id === docId)?.data();
+      if (!data) return;
+
+      document.getElementById("year").value = data.year;
+      document.getElementById("month").value = data.month;
+      updateWeekDropdown();
+      document.getElementById("week").value = data.week;
+
+      const tbody = document.getElementById("expenseBody");
+      tbody.innerHTML = "";
+      data.expenses.forEach((exp, idx) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><input type="text" value="${exp.description}" /></td>
+          <td><input type="text" value="${exp.quantity}" /></td>
+          <td><input type="number" value="${exp.amount}" /></td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById("month").addEventListener("change", updateWeekDropdown);
+    populateYears();
+    updateWeekDropdown();
+    loadSavedInvestments();
+  </script>
+</body>
+</html>
