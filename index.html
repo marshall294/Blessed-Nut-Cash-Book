@@ -3,292 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Blessed Nut Cash Book</title>
+  <title>Blessed Nut | Cash Book System</title>
   <style>
     :root {
       --primary: #228B22;
-      --accent: #0f5132;
-      --light: #e8f5e9;
-      --gray: #ccc;
+      --accent: #1e7e34;
+      --dark: #155724;
+      --shadow: rgba(0, 0, 0, 0.1);
     }
+
     * {
       box-sizing: border-box;
     }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 1rem;
+      font-family: 'Segoe UI', sans-serif;
       background: #f0f2f5;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: var(--primary);
-      margin-bottom: 1rem;
-    }
-    .card {
-      background: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       padding: 1rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 12px rgba(0,0,0,0.05);
     }
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: 600;
-      color: #444;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 8px;
-      border: 1px solid var(--gray);
-      background-color: #fff;
-      font-size: 1rem;
-    }
-    button {
-      background: var(--primary);
-      color: white;
-      padding: 10px;
-      border: none;
-      margin-top: 1rem;
-      border-radius: 8px;
-      width: 100%;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background: var(--accent);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
+
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px var(--shadow);
       text-align: center;
+      width: 100%;
+      max-width: 420px;
     }
-    th {
-      background: var(--primary);
-      color: white;
-    }
-    .totals {
-      margin-top: 1rem;
-      font-weight: bold;
-      font-size: 1.1rem;
+
+    h1 {
       color: var(--primary);
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
     }
-    .table-wrapper {
-      overflow-x: auto;
+
+    p {
+      color: #444;
+      margin-bottom: 2rem;
+      font-size: 1rem;
     }
-    @media (min-width: 768px) {
-      .card {
-        max-width: 700px;
-        margin: auto;
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      margin-bottom: 1rem;
+      background: linear-gradient(to bottom, var(--primary), var(--accent));
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      box-shadow: 0 4px var(--dark);
+      text-decoration: none;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px #0f5132;
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px #0a3622;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem 1rem;
+        border-radius: 14px;
+      }
+
+      h1 {
+        font-size: 1.7rem;
+      }
+
+      .btn {
+        font-size: 1rem;
+        padding: 12px;
       }
     }
   </style>
 </head>
 <body>
-  <h1>Blessed Nut Cash Book</h1>
+  <div class="container">
+    <h1>🌰 Blessed Nut</h1>
+    <p>Manage your investments, sales, and profits in one place.</p>
 
-  <div class="card filters">
-    <h3>🔍 Filter Records</h3>
-    <label>Year:
-      <select id="filterYear"></select>
-    </label>
-    <label>Month:
-      <select id="filterMonth">
-        <option value="">All</option>
-        <option value="01">January</option>
-        <option value="02">February</option>
-        <option value="03">March</option>
-        <option value="04">April</option>
-        <option value="05">May</option>
-        <option value="06">June</option>
-        <option value="07">July</option>
-        <option value="08">August</option>
-        <option value="09">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
-      </select>
-    </label>
-    <button id="filterBtn">Filter Records</button>
+    <a href="investment.html" class="btn">💼 Investment</a>
+    <a href="sales.html" class="btn">🛒 Sales</a>
+    <a href="profit-loss.html" class="btn">📈 Profit & Loss</a>
   </div>
-
-  <div class="card cashbook-form">
-    <h3>📝 New Cash Book Entry</h3>
-    <label>Date:
-      <input type="date" id="entryDate" />
-    </label>
-    <label>Item:
-      <select id="itemType">
-        <option value="bottle">Bottle/Plastic</option>
-        <option value="pieces">Small Pieces</option>
-      </select>
-    </label>
-    <label>Quantity:
-      <input type="number" id="quantity" />
-    </label>
-    <label>Sales (₦):
-      <input type="number" id="sales" />
-    </label>
-    <label>Expected Amount (₦):
-      <input type="number" id="expected" readonly />
-    </label>
-    <label>Balance (₦):
-      <input type="number" id="balance" readonly />
-    </label>
-    <button id="saveEntryBtn">💾 Save Entry</button>
-  </div>
-
-  <div class="card entries">
-    <h3>📋 Cash Book Entries</h3>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Sales (₦)</th>
-            <th>Expected (₦)</th>
-            <th>Balance (₦)</th>
-          </tr>
-        </thead>
-        <tbody id="entriesTable"></tbody>
-      </table>
-    </div>
-    <div class="totals" id="monthlyTotals"></div>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAFsHg9fK6IDnHbuxmBleEfIIfVGsuLDik",
-      authDomain: "profile-b825d.firebaseapp.com",
-      projectId: "profile-b825d",
-      storageBucket: "profile-b825d.appspot.com",
-      messagingSenderId: "925276859161",
-      appId: "1:925276859161:web:194c60f6dbd9f1ef8bf388"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const itemType = document.getElementById("itemType");
-    const quantity = document.getElementById("quantity");
-    const sales = document.getElementById("sales");
-    const expected = document.getElementById("expected");
-    const balance = document.getElementById("balance");
-
-    function updateCalculation() {
-      let unitPrice = itemType.value === "pieces" ? 500 / 6 : 1700;
-      let qty = parseFloat(quantity.value) || 0;
-      let sale = parseFloat(sales.value) || 0;
-      let exp = unitPrice * qty;
-      expected.value = exp.toFixed(2);
-      balance.value = (exp - sale).toFixed(2);
-    }
-
-    itemType.onchange = updateCalculation;
-    quantity.oninput = updateCalculation;
-    sales.oninput = updateCalculation;
-
-    async function saveEntry() {
-      const data = {
-        date: document.getElementById("entryDate").value,
-        item: itemType.value,
-        quantity: Number(quantity.value),
-        sales: Number(sales.value),
-        expected: Number(expected.value),
-        balance: Number(balance.value),
-        timestamp: new Date().toISOString()
-      };
-      if (!data.date || !data.quantity || isNaN(data.sales)) {
-        alert("Please fill all fields.");
-        return;
-      }
-      await addDoc(collection(db, "cashbook"), data);
-      alert("Entry saved!");
-      document.getElementById("entryDate").value = "";
-      quantity.value = "";
-      sales.value = "";
-      expected.value = "";
-      balance.value = "";
-      loadEntries();
-    }
-
-    async function loadEntries() {
-      const year = document.getElementById("filterYear").value;
-      const month = document.getElementById("filterMonth").value;
-      let q = query(collection(db, "cashbook"), orderBy("date", "desc"));
-      const snapshot = await getDocs(q);
-      const tbody = document.getElementById("entriesTable");
-      const totalsDiv = document.getElementById("monthlyTotals");
-
-      tbody.innerHTML = "";
-      let totalSales = 0;
-      let totalExpected = 0;
-      let totalBalance = 0;
-
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const dYear = d.date?.split("-")[0];
-        const dMonth = d.date?.split("-")[1];
-
-        if ((year && dYear !== year) || (month && dMonth !== month)) return;
-
-        totalSales += d.sales;
-        totalExpected += d.expected;
-        totalBalance += d.balance;
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${d.date}</td>
-            <td>${d.item === "pieces" ? "Small Pieces" : "Bottle/Plastic"}</td>
-            <td>${d.quantity}</td>
-            <td>₦${d.sales.toFixed(2)}</td>
-            <td>₦${d.expected.toFixed(2)}</td>
-            <td>₦${d.balance.toFixed(2)}</td>
-          </tr>`;
-      });
-
-      const balanceStatus = totalBalance < 0
-        ? `✅ <span style="color:green">Gain of ₦${Math.abs(totalBalance).toFixed(2)}</span>`
-        : `⚠️ <span style="color:red">Shortage of ₦${totalBalance.toFixed(2)}</span>`;
-
-      totalsDiv.innerHTML = `
-        📊 <b>Monthly Summary</b><br>
-        Total Sales: ₦${totalSales.toFixed(2)}<br>
-        Expected Amount: ₦${totalExpected.toFixed(2)}<br>
-        ${balanceStatus}
-      `;
-    }
-
-    function populateYears() {
-      const yearSel = document.getElementById("filterYear");
-      yearSel.innerHTML = `<option value="">All</option>`;
-      for (let y = 2025; y <= 2030; y++) {
-        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-      }
-    }
-
-    document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
-    document.getElementById("filterBtn").addEventListener("click", loadEntries);
-
-    populateYears();
-    loadEntries();
-  </script>
 </body>
 </html>
